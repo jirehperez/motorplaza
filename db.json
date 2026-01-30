@@ -1,0 +1,11 @@
+{
+  "customers": [
+    {
+      "customer_name": "Juan Dela Cruz",
+      "address": "Manila",
+      "contact_number": "09171234567",
+      "date_of_birth": "1990-05-10",
+      "tin": "123-456-789"
+    }
+  ]
+}

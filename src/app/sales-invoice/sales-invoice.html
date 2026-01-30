@@ -1,0 +1,379 @@
+<div class="p-6">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-xl font-bold">Sales Invoices</h2>
+    <button
+      class="bg-blue-500 text-white px-4 py-2 rounded"
+      (click)="openModal('add')"
+    >
+      Add Sales Invoice
+    </button>
+  </div>
+
+  <!-- Search -->
+  <div class="mb-4">
+    <input
+      type="text"
+      [(ngModel)]="searchTerm"
+      placeholder="Search invoices..."
+      class="border px-3 py-2 rounded w-full"
+    />
+  </div>
+
+  <!-- Table -->
+  <table class="min-w-full bg-white border">
+    <thead>
+      <tr class="bg-gray-100 border-b">
+        <th class="py-2 px-4 text-left">Customer</th>
+        <th class="py-2 px-4 text-left">Branch</th>
+        <th class="py-2 px-4 text-left">Invoice Type</th>
+        <th class="py-2 px-4 text-left">Invoice Number</th>
+        <th class="py-2 px-4 text-left">Invoice Date</th>
+        <th class="py-2 px-4 text-left">Total Payable</th>
+        <th class="py-2 px-4 text-center">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr
+        *ngFor="
+          let invoice of salesInvoices
+            | filter: searchTerm : 'invoice_number'
+            | slice:(currentPage-1)*pageSize:(currentPage)*pageSize
+        "
+        class="border-b"
+      >
+        <td class="py-2 px-4">{{ getCustomerName(invoice.customer_id) }}</td>
+        <td class="py-2 px-4">{{ getBranchName(invoice.branch_id) }}</td>
+        <td class="py-2 px-4">{{ invoice.invoice_type }}</td>
+        <td class="py-2 px-4">{{ invoice.invoice_number }}</td>
+        <td class="py-2 px-4">{{ invoice.invoice_date | date: 'MMM d, y' }}</td>
+        <td class="py-2 px-4">{{ invoice.total_amount_payable | currency:'PHP' }}</td>
+        <td class="py-2 px-4 text-center">
+          <button class="text-blue-500 mr-2" (click)="openModal('view', invoice)">View</button>
+          <button class="text-green-500 mr-2" (click)="openModal('edit', invoice)">Edit</button>
+          <button class="text-red-500" (click)="deleteInvoice(invoice.id)">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Pagination -->
+  <div class="flex justify-between items-center mt-4">
+    <button
+      class="px-3 py-1 border rounded"
+      [disabled]="currentPage === 1"
+      (click)="currentPage = currentPage - 1"
+    >
+      Previous
+    </button>
+    <span>Page {{ currentPage }}</span>
+    <button
+      class="px-3 py-1 border rounded"
+      [disabled]="currentPage * pageSize >= salesInvoices.length"
+      (click)="currentPage = currentPage + 1"
+    >
+      Next
+    </button>
+  </div>
+</div>
+
+<!-- Modal -->
+<div
+  *ngIf="isModalOpen"
+  class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+>
+  <div class="bg-white p-6 rounded w-full max-w-7xl mx-auto overflow-y-auto max-h-screen">
+    <h3 class="text-lg font-bold mb-4">
+      {{ modalMode === 'add' ? 'Add Sales Invoice' : modalMode === 'edit' ? 'Edit Sales Invoice' : 'View Sales Invoice' }}
+    </h3>
+
+    <!-- Modal Form -->
+    <form 
+      *ngIf="modalMode !== 'view'" 
+      #invoiceForm="ngForm" 
+      (ngSubmit)="saveInvoice(invoiceForm)" 
+      class="space-y-6" 
+      novalidate
+    >
+
+      <!-- Invoice + Vehicle Information -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+        <!-- Invoice Information -->
+        <div class="col-span-2 space-y-4">
+          <h3 class="text-md font-semibold text-gray-700">Invoice Information</h3>
+
+          <!-- Customer -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Customer</label>
+            <ng-select
+              [items]="customers"
+              bindLabel="customer_name"
+              bindValue="id"
+              [(ngModel)]="selectedInvoice.customer_id"
+              name="customer_id"
+              placeholder="Select customer"
+              [searchable]="true"
+              [clearable]="true"
+              required
+              [ngClass]="{'border-red-500': invoiceForm.submitted && !selectedInvoice.customer_id}"
+            >
+            </ng-select>
+            <p class="text-red-500 text-sm mt-1" *ngIf="invoiceForm.submitted && !selectedInvoice.customer_id">
+              Customer is required
+            </p>
+          </div>
+
+          <!-- Branch -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Branch</label>
+            <ng-select
+              [items]="branches"
+              bindLabel="branch_name"
+              bindValue="id"
+              [(ngModel)]="selectedInvoice.branch_id"
+              name="branch_id"
+              placeholder="Select branch"
+              [searchable]="true"
+              [clearable]="true"
+              required
+              [ngClass]="{'border-red-500': invoiceForm.submitted && !selectedInvoice.branch_id}"
+            >
+            </ng-select>
+            <p class="text-red-500 text-sm mt-1" *ngIf="invoiceForm.submitted && !selectedInvoice.branch_id">
+              Branch is required
+            </p>
+          </div>
+
+          <!-- Invoice Type -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Invoice Type</label>
+            <select 
+              [(ngModel)]="selectedInvoice.invoice_type" 
+              name="invoice_type" 
+              required 
+              class="w-full px-3 py-2 border rounded-md"
+              [ngClass]="{'border-red-500': invoiceForm.submitted && !selectedInvoice.invoice_type}"
+            >
+              <option value="Vehicle">Vehicle</option>
+              <option value="Parts">Parts</option>
+            </select>
+          </div>
+
+          <!-- Invoice Number -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Invoice Number</label>
+            <input 
+              type="text" 
+              [(ngModel)]="selectedInvoice.invoice_number" 
+              name="invoice_number" 
+              required 
+              class="w-full px-3 py-2 border rounded-md"
+              [ngClass]="{'border-red-500': invoiceForm.submitted && !selectedInvoice.invoice_number}"
+            />
+            <p class="text-red-500 text-sm mt-1" *ngIf="invoiceForm.submitted && !selectedInvoice.invoice_number">
+              Invoice number is required
+            </p>
+          </div>
+
+          <!-- Invoice Date -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Invoice Date</label>
+            <input 
+              type="date" 
+              [(ngModel)]="selectedInvoice.invoice_date" 
+              name="invoice_date" 
+              required 
+              class="w-full px-3 py-2 border rounded-md"
+              [ngClass]="{'border-red-500': invoiceForm.submitted && !selectedInvoice.invoice_date}"
+            />
+            <p class="text-red-500 text-sm mt-1" *ngIf="invoiceForm.submitted && !selectedInvoice.invoice_date">
+              Invoice date is required
+            </p>
+          </div>
+        </div>
+        <!-- Vehicle Information -->
+        <div class="col-span-2 space-y-4">
+        <h3 class="text-md font-semibold text-gray-700">Vehicle Information</h3>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Vehicle CS No.</label>
+            <ng-select
+            [items]="vehicles"
+            bindLabel="cs_number"
+            bindValue="id"
+            [(ngModel)]="selectedInvoice.vehicle_id"
+            name="vehicle_id"
+            placeholder="Select vehicle"
+            [clearable]="true"
+            (change)="onVehicleChange($event)"
+            [ngClass]="{'border-red-500': invoiceForm.submitted && !selectedInvoice.vehicle_id}"
+            >
+            </ng-select>
+            <p class="text-red-500 text-sm mt-1" *ngIf="invoiceForm.submitted && !selectedInvoice.vehicle_id">
+            Vehicle is required
+            </p>
+        </div>
+
+        <!-- Vehicle Details -->
+        <div *ngIf="selectedVehicleDetails" class="mt-2 p-3 bg-gray-50 border rounded text-sm">
+            <p><strong>Vehicle Type:</strong> {{ selectedVehicleDetails.vehicle_type }}</p>
+            <p><strong>Make:</strong> {{ selectedVehicleDetails.make }}</p>
+            <p><strong>Color:</strong> {{ selectedVehicleDetails.color }}</p>
+            <p><strong>Gross Vehicle Weight:</strong> {{ selectedVehicleDetails.gvw }}</p>
+            <p><strong>Engine Number:</strong> {{ selectedVehicleDetails.engine_number }}</p>
+            <p><strong>Serial Number:</strong> {{ selectedVehicleDetails.serial_number }}</p>
+            <p><strong>CS Number:</strong> {{ selectedVehicleDetails.cs_number }}</p>
+            <p><strong>Plate Number:</strong> {{ selectedVehicleDetails.plate_number }}</p>
+        </div>
+        </div>
+
+      </div>
+
+      <!-- Totals + Financial Information -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+        <!-- Totals -->
+        <div [class.col-span-4]="selectedInvoice.invoice_type !== 'Vehicle'" [class.col-span-2]="selectedInvoice.invoice_type === 'Vehicle'" class="space-y-4">
+          <h3 class="text-md font-semibold text-gray-700">Totals</h3>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Total Sales (VAT Inclusive)</label>
+            <input
+              type="text"
+              [(ngModel)]="selectedInvoice.total_sales_vat_inclusive"
+              name="total_sales_vat_inclusive"
+              (blur)="updateVATandTotal()"
+              required
+              class="w-full px-3 py-2 border rounded-md"
+              [ngClass]="{'border-red-500': invoiceForm.submitted && selectedInvoice.total_sales_vat_inclusive <= 0}"
+              appNumberFormat
+            />
+            <p class="text-red-500 text-sm mt-1" *ngIf="invoiceForm.submitted && selectedInvoice.total_sales_vat_inclusive <= 0">
+              Total sales must be greater than 0
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700">VAT (Auto)</label>
+            <input type="text" [value]="selectedInvoice.vat | number:'1.2-2'" name="vat" class="w-full px-3 py-2 border rounded-md bg-gray-100" readonly />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Net Total</label>
+            <input type="text" [value]="selectedInvoice.net | number:'1.2-2'" class="w-full px-3 py-2 border rounded-md bg-gray-100" readonly />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Total Amount Payable</label>
+            <input 
+              type="text" 
+              [(ngModel)]="selectedInvoice.total_amount_payable"
+              [value]="selectedInvoice.total_amount_payable | number:'1.2-2'"
+              name="total_amount_payable" 
+              required 
+              class="w-full px-3 py-2 border rounded-md"
+              [ngClass]="{'border-red-500': invoiceForm.submitted && selectedInvoice.total_amount_payable <= 0}"
+              appNumberFormat
+            />
+            <p class="text-red-500 text-sm mt-1" *ngIf="invoiceForm.submitted && selectedInvoice.total_amount_payable <= 0">
+              Total amount payable must be greater than 0
+            </p>
+          </div>
+        </div>
+
+        <!-- Financial Information -->
+        <div *ngIf="selectedInvoice.invoice_type === 'Vehicle'" class="col-span-2 space-y-4">
+          <h3 class="text-md font-semibold text-gray-700">Financial Information</h3>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Bank</label>
+            <input type="text" [(ngModel)]="selectedInvoice.bank" name="bank" class="w-full px-3 py-2 border rounded-md" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Terms</label>
+            <input type="text" [(ngModel)]="selectedInvoice.terms" name="terms" class="w-full px-3 py-2 border rounded-md" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Downpayment</label>
+            <input type="number" [(ngModel)]="selectedInvoice.downpayment" name="downpayment" class="w-full px-3 py-2 border rounded-md" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Amount Financed</label>
+            <input type="number" [(ngModel)]="selectedInvoice.amount_financed" name="amount_financed" class="w-full px-3 py-2 border rounded-md" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Parts Section -->
+      <div *ngIf="selectedInvoice.invoice_type === 'Parts'" class="space-y-4">
+        <h3 class="text-md font-semibold text-gray-700">Parts Information</h3>
+        <div *ngFor="let part of selectedInvoice.parts; let i = index" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+          <input 
+            type="text" 
+            [(ngModel)]="part.item_description" 
+            name="item_description_{{i}}" 
+            placeholder="Item Description" 
+            required
+            class="px-3 py-2 border rounded-md w-full"
+            [ngClass]="{'border-red-500': invoiceForm.submitted && !part.item_description}"
+          />
+          <input type="text" [(ngModel)]="part.part_number" name="part_number_{{i}}" placeholder="Part No." class="px-3 py-2 border rounded-md w-full" />
+          <input 
+            type="number" 
+            [(ngModel)]="part.quantity" 
+            name="quantity_{{i}}" 
+            placeholder="Qty" 
+            required
+            min="1"
+            class="px-3 py-2 border rounded-md w-full"
+            (input)="updatePartTotal(i)"
+            [ngClass]="{'border-red-500': invoiceForm.submitted && (!part.quantity || part.quantity < 1)}"
+          />
+          <input 
+            type="number" 
+            [(ngModel)]="part.unit_price" 
+            name="unit_price_{{i}}" 
+            placeholder="Unit Price" 
+            required
+            min="0"
+            class="px-3 py-2 border rounded-md w-full"
+            (input)="updatePartTotal(i)"
+            [ngClass]="{'border-red-500': invoiceForm.submitted && (part.unit_price < 0)}"
+          />
+          <input type="number" [value]="part.total_price" name="total_price_{{i}}" placeholder="Total" class="px-3 py-2 border rounded-md w-full bg-gray-100" readonly />
+          <button type="button" class="text-red-500 text-sm ml-2" (click)="removePart(i)">Remove</button>
+        </div>
+        <button type="button" class="bg-green-500 text-white px-4 py-2 rounded" (click)="addPart()">Add Part</button>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex justify-end space-x-2 pt-4">
+        <button type="button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium px-4 py-2 rounded" (click)="closeModal()">Close</button>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded">Save</button>
+      </div>
+    </form>
+
+    <!-- View Mode -->
+    <div *ngIf="modalMode === 'view'" class="space-y-2">
+      <p><strong>Customer:</strong> {{ getCustomerName(selectedInvoice.customer_id) }}</p>
+      <p><strong>Branch:</strong> {{ getBranchName(selectedInvoice.branch_id) }}</p>
+      <p><strong>Invoice Type:</strong> {{ selectedInvoice.invoice_type }}</p>
+      <p><strong>Vehicle:</strong> {{ getVehicleName(selectedInvoice.vehicle_id) }}</p>
+      <p><strong>Invoice Number:</strong> {{ selectedInvoice.invoice_number }}</p>
+      <p><strong>Invoice Date:</strong> {{ selectedInvoice.invoice_date }}</p>
+      <p><strong>Total Payable:</strong> {{ selectedInvoice.total_amount_payable | currency:'PHP' }}</p>
+
+      <div *ngIf="selectedInvoice.invoice_type === 'Parts' && selectedInvoice.parts?.length">
+        <h4 class="font-semibold mt-4">Parts</h4>
+        <ul class="list-disc pl-5">
+          <li *ngFor="let part of selectedInvoice.parts">
+            {{ part.part_number }} - {{ part.item_description }} ({{ part.quantity }} × {{ part.unit_price }} = {{ part.total_price }})
+          </li>
+        </ul>
+      </div>
+
+      <div class="flex justify-end mt-4">
+        <button class="bg-gray-300 px-4 py-2 rounded" (click)="closeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

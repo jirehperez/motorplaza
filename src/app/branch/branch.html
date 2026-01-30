@@ -1,0 +1,59 @@
+<div class="p-6">
+  <div class="flex justify-between mb-4">
+    <input type="text" [(ngModel)]="search" placeholder="Search branch..."
+           class="border rounded px-3 py-1" />
+    <button (click)="openModal('add')" class="bg-blue-600 text-white px-4 py-2 rounded">
+      Add Branch
+    </button>
+  </div>
+
+  <table class="min-w-full border border-gray-300">
+    <thead class="bg-gray-100">
+      <tr>
+        <th class="p-2 border">Branch Name</th>
+        <th class="p-2 border">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let b of paginated">
+        <td class="p-2 border">{{ b.branch_name }}</td>
+        <td class="p-2 border">
+          <button (click)="openModal('view', b)" class="text-blue-600 mr-2">View</button>
+          <button (click)="openModal('edit', b)" class="text-green-600 mr-2">Edit</button>
+          <button (click)="deleteBranch(b)" class="text-red-600">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Pagination -->
+  <div class="mt-4 flex justify-center items-center space-x-2">
+    <button (click)="page = page - 1" [disabled]="page === 1"
+            class="px-3 py-1 border rounded">Prev</button>
+    <span>Page {{ page }} of {{ totalPages }}</span>
+    <button (click)="page = page + 1" [disabled]="page === totalPages"
+            class="px-3 py-1 border rounded">Next</button>
+  </div>
+</div>
+
+<!-- Modal -->
+<div *ngIf="modalOpen" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+  <div class="bg-white p-6 rounded shadow-lg w-96">
+    <h2 class="text-lg font-semibold mb-4">
+      {{ modalMode === 'add' ? 'Add Branch' : modalMode === 'edit' ? 'Edit Branch' : 'View Branch' }}
+    </h2>
+
+    <div class="mb-3">
+      <label class="block text-sm mb-1">Branch Name</label>
+      <input type="text" [(ngModel)]="selectedBranch.branch_name"
+             [readonly]="modalMode === 'view'"
+             class="w-full border rounded px-3 py-1" />
+    </div>
+
+    <div class="flex justify-end space-x-2">
+      <button (click)="closeModal()" class="px-4 py-2 border rounded">Close</button>
+      <button *ngIf="modalMode !== 'view'" (click)="saveBranch()"
+              class="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
+    </div>
+  </div>
+</div>

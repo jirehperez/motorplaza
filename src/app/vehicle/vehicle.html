@@ -1,0 +1,109 @@
+<div class="p-6">
+  <h2 class="text-2xl font-bold mb-4">Vehicle Management</h2>
+
+  <!-- Search + Add -->
+  <div class="flex justify-between mb-4">
+    <input
+      type="text"
+      [(ngModel)]="searchTerm"
+      (input)="searchVehicles()"
+      placeholder="Search vehicles..."
+      class="border rounded p-2 w-1/3"
+    />
+    <button
+      class="bg-blue-500 text-white px-4 py-2 rounded"
+      (click)="openModal('add')"
+    >
+      Add Vehicle
+    </button>
+  </div>
+
+  <!-- Table -->
+  <table class="min-w-full bg-white border">
+    <thead>
+      <tr class="bg-gray-200 text-left">
+        <th class="py-2 px-4 border">Type</th>
+        <th class="py-2 px-4 border">Make</th>
+        <th class="py-2 px-4 border">Color</th>
+        <th class="py-2 px-4 border">GVW</th>
+        <th class="py-2 px-4 border">Engine #</th>
+        <th class="py-2 px-4 border">Serial #</th>
+        <th class="py-2 px-4 border">Plate #</th>
+        <th class="py-2 px-4 border">CS #</th>
+        <th class="py-2 px-4 border">Description</th>
+        <th class="py-2 px-4 border">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let v of paginatedVehicles" class="border-b">
+        <td class="py-2 px-4">{{ v.vehicle_type }}</td>
+        <td class="py-2 px-4">{{ v.make }}</td>
+        <td class="py-2 px-4">{{ v.color }}</td>
+        <td class="py-2 px-4">{{ v.gvw }}</td>
+        <td class="py-2 px-4">{{ v.engine_number }}</td>
+        <td class="py-2 px-4">{{ v.serial_number }}</td>
+        <td class="py-2 px-4">{{ v.plate_number }}</td>
+        <td class="py-2 px-4">{{ v.cs_number }}</td>
+        <td class="py-2 px-4">{{ v.description }}</td>
+        <td class="py-2 px-4 space-x-2">
+          <button class="bg-green-500 text-white px-2 py-1 rounded" (click)="openModal('view', v)">View</button>
+          <button class="bg-yellow-500 text-white px-2 py-1 rounded" (click)="openModal('edit', v)">Edit</button>
+          <button class="bg-red-500 text-white px-2 py-1 rounded" (click)="deleteVehicle(v.id!)">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Pagination -->
+  <div class="flex justify-between mt-4">
+    <button (click)="currentPage = currentPage - 1" [disabled]="currentPage === 1" class="px-3 py-1 bg-gray-300 rounded">Prev</button>
+    <span>Page {{ currentPage }} of {{ totalPages() }}</span>
+    <button (click)="currentPage = currentPage + 1" [disabled]="currentPage === totalPages()" class="px-3 py-1 bg-gray-300 rounded">Next</button>
+  </div>
+</div>
+
+<!-- Modal -->
+<div *ngIf="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+  <div class="bg-white p-6 rounded shadow-lg w-1/2">
+    <h3 class="text-xl font-bold mb-4">
+      {{ modalMode === 'add' ? 'Add Vehicle' : modalMode === 'edit' ? 'Edit Vehicle' : 'View Vehicle' }}
+    </h3>
+
+    <form *ngIf="modalMode !== 'view'; else viewMode">
+      <div class="grid grid-cols-2 gap-4">
+        <input [(ngModel)]="selectedVehicle.vehicle_type" name="vehicle_type" placeholder="Vehicle Type" class="border p-2 rounded" />
+        <input [(ngModel)]="selectedVehicle.make" name="make" placeholder="Make" class="border p-2 rounded" />
+        <input [(ngModel)]="selectedVehicle.color" name="color" placeholder="Color" class="border p-2 rounded" />
+        <input [(ngModel)]="selectedVehicle.gvw" name="gvw" placeholder="GVW" class="border p-2 rounded" />
+        <input [(ngModel)]="selectedVehicle.engine_number" name="engine_number" placeholder="Engine Number" class="border p-2 rounded" />
+        <input [(ngModel)]="selectedVehicle.serial_number" name="serial_number" placeholder="Serial Number" class="border p-2 rounded" />
+        <input [(ngModel)]="selectedVehicle.plate_number" name="plate_number" placeholder="Plate Number" class="border p-2 rounded" />
+        <input [(ngModel)]="selectedVehicle.cs_number" name="cs_number" placeholder="CS Number" class="border p-2 rounded" />
+        <textarea [(ngModel)]="selectedVehicle.description" name="description" placeholder="Description" class="border p-2 rounded col-span-2"></textarea>
+      </div>
+
+      <div class="mt-4 flex justify-end space-x-2">
+        <button type="button" class="bg-gray-400 text-white px-4 py-2 rounded" (click)="closeModal()">Cancel</button>
+        <button type="button" class="bg-blue-500 text-white px-4 py-2 rounded" (click)="saveVehicle()">Save</button>
+      </div>
+    </form>
+
+    <!-- View Mode -->
+    <ng-template #viewMode>
+      <div class="grid grid-cols-2 gap-4">
+        <div><strong>Vehicle Type:</strong> {{ selectedVehicle.vehicle_type }}</div>
+        <div><strong>Make:</strong> {{ selectedVehicle.make }}</div>
+        <div><strong>Color:</strong> {{ selectedVehicle.color }}</div>
+        <div><strong>GVW:</strong> {{ selectedVehicle.gvw }}</div>
+        <div><strong>Engine Number:</strong> {{ selectedVehicle.engine_number }}</div>
+        <div><strong>Serial Number:</strong> {{ selectedVehicle.serial_number }}</div>
+        <div><strong>Plate Number:</strong> {{ selectedVehicle.plate_number }}</div>
+        <div><strong>CS Number:</strong> {{ selectedVehicle.cs_number }}</div>
+        <div class="col-span-2"><strong>Description:</strong> {{ selectedVehicle.description }}</div>
+      </div>
+      <div class="mt-4 flex justify-end">
+        <button class="bg-gray-400 text-white px-4 py-2 rounded" (click)="closeModal()">Close</button>
+      </div>
+    </ng-template>
+  </div>
+</div>

@@ -1,0 +1,65 @@
+<div class="min-h-screen bg-gray-50 flex">
+  <!-- Sidebar -->
+  <aside class="hidden md:block w-64 bg-white border-r">
+    <div class="p-4 text-xl font-semibold">Accounting</div>
+    <nav class="px-2 pb-4 space-y-1">
+      <a
+        routerLink="dashboard"
+        routerLinkActive="bg-gray-100 font-medium"
+        class="block rounded-xl px-3 py-2 hover:bg-gray-100 cursor-pointer"
+        >Dashboard</a
+      >
+      <a
+        routerLink="sales-invoice"
+        routerLinkActive="bg-gray-100 font-medium"
+        class="block rounded-xl px-3 py-2 hover:bg-gray-100 cursor-pointer"
+        >Sales Invoices</a
+      >
+      <a
+        routerLink="official-receipt"
+        routerLinkActive="bg-gray-100 font-medium"
+        class="block rounded-xl px-3 py-2 hover:bg-gray-100 cursor-pointer"
+        >Official Receipt</a
+      >
+      <a
+        routerLink="customer"
+        routerLinkActive="bg-gray-100 font-medium"
+        class="block rounded-xl px-3 py-2 hover:bg-gray-100 cursor-pointer"
+        >Customers</a
+      >
+      <a
+        routerLink="branch"
+        routerLinkActive="bg-gray-100 font-medium"
+        class="block rounded-xl px-3 py-2 hover:bg-gray-100 cursor-pointer"
+        >Branches</a
+      >
+      <a
+        routerLink="vehicle"
+        routerLinkActive="bg-gray-100 font-medium"
+        class="block rounded-xl px-3 py-2 hover:bg-gray-100 cursor-pointer"
+        >Vehicles</a
+      >
+      <a class="block rounded-xl px-3 py-2 hover:bg-gray-100 cursor-pointer"
+        >Settings</a
+      >
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 flex flex-col">
+    <!-- Header -->
+    <header class="sticky top-0 z-10 bg-white border-b">
+      <div class="flex items-center gap-3 justify-between p-4">
+        <div class="flex items-center gap-3">
+          <button class="md:hidden rounded-xl border px-3 py-2">Menu</button>
+          <h1 class="text-2xl font-semibold">Motor Plaza</h1>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main section where child routes load -->
+    <section class="flex-1 overflow-y-auto">
+      <router-outlet></router-outlet>
+    </section>
+  </main>
+</div>
