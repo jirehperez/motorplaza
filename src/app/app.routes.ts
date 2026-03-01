@@ -30,7 +30,7 @@ export const routes: Routes = [
       {
         path: 'customer',
         loadComponent: () =>
-          import('./customer/customer').then(m => m.Customer),
+          import('./customer/customer').then(m => m.CustomerComponent),
       },
       {
         path: 'branch',
